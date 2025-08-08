@@ -1,0 +1,8 @@
+{
+  "name": "Sugar Vibes",
+  "description": "App de Emma para calcular costos",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "prompt": ""
+}
