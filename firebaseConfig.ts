@@ -1,16 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, initializeFirestore, persistentLocalCache, Firestore } from "firebase/firestore";
 
-// TODO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase
-// que encontrarás en la consola de Firebase > Configuración del proyecto.
+// Las variables de entorno se cargan desde el archivo .env.local
 const firebaseConfig = {
-  apiKey: "AIzaSyBVyZLnfNMa5kQ_uLLbZjDaiW276J9u0gQ",
-  authDomain: "sugar-vibes.firebaseapp.com",
-  projectId: "sugar-vibes",
-  storageBucket: "sugar-vibes.firebasestorage.app",
-  messagingSenderId: "1050505896406",
-  appId: "1:1050505896406:web:cdbe1dba131e9a25b2c477",
-  measurementId: "G-1KN6W5RTWT"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
 
 // Inicializa Firebase
