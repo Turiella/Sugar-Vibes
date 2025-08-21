@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
+import { FormField } from '../ui/FormField';
+import { PrimaryButton } from '../ui/PrimaryButton';
+import { SecondaryButton } from '../ui/SecondaryButton';
 import { Recipe } from '../../types';
 
 interface RecipeFormModalProps {
@@ -41,13 +44,18 @@ export const RecipeFormModal: React.FC<RecipeFormModalProps> = ({ isOpen, onClos
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={recipe?.id ? 'Editar Receta' : 'Nueva Receta'}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <Input label="Nombre de la Receta" id="rec-name" type="text" value={name} onChange={e => setName(e.target.value)} required />
-                <Input label="Número de Porciones" id="rec-servings" type="number" value={servings} onChange={e => setServings(e.target.value)} required />
-                <div className="flex justify-end pt-4">
-                    <button type="submit" className="bg-amber-600 text-white px-6 py-2 rounded-md hover:bg-amber-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled={isSubmitting}>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <FormField label="Nombre de la Receta">
+                    <Input id="rec-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Ej: Torta de Chocolate" />
+                </FormField>
+                <FormField label="Número de Porciones">
+                    <Input id="rec-servings" type="number" value={servings} onChange={e => setServings(e.target.value)} required placeholder="Ej: 8" />
+                </FormField>
+                <div className="flex justify-end gap-3 pt-4">
+                    <SecondaryButton type="button" onClick={onClose}>Cancelar</SecondaryButton>
+                    <PrimaryButton type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Guardando...' : 'Guardar'}
-                    </button>
+                    </PrimaryButton>
                 </div>
             </form>
         </Modal>

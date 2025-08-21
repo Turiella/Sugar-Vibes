@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { FormField } from '../ui/FormField';
+import { PrimaryButton } from '../ui/PrimaryButton';
+import { SecondaryButton } from '../ui/SecondaryButton';
 import { Ingredient, Unit, UnitLabels } from '../../types';
 
 interface IngredientFormModalProps {
@@ -47,19 +50,28 @@ export const IngredientFormModal: React.FC<IngredientFormModalProps> = ({ isOpen
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={ingredient?.id ? 'Editar Ingrediente' : 'Nuevo Ingrediente'}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <Input label="Nombre del Ingrediente" id="ing-name" type="text" value={name} onChange={e => setName(e.target.value)} required />
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <FormField label="Nombre del Ingrediente">
+                    <Input id="ing-name" type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Ej: Harina 0000" />
+                </FormField>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Input label="Precio de Compra (ARS)" id="ing-price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required />
-                    <Input label="Cantidad Comprada" id="ing-quantity" type="number" step="0.01" value={quantity} onChange={e => setQuantity(e.target.value)} required />
-                    <Select label="Unidad de Compra" id="ing-unit" value={unit} onChange={e => setUnit(e.target.value as Unit)}>
-                        {Object.entries(UnitLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                    </Select>
+                    <FormField label="Precio (ARS)">
+                        <Input id="ing-price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required placeholder="Ej: 1500.50" />
+                    </FormField>
+                    <FormField label="Cantidad">
+                        <Input id="ing-quantity" type="number" step="0.01" value={quantity} onChange={e => setQuantity(e.target.value)} required placeholder="Ej: 1" />
+                    </FormField>
+                    <FormField label="Unidad">
+                        <Select id="ing-unit" value={unit} onChange={e => setUnit(e.target.value as Unit)}>
+                            {Object.entries(UnitLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                        </Select>
+                    </FormField>
                 </div>
-                <div className="flex justify-end pt-4">
-                    <button type="submit" className="bg-amber-600 text-white px-6 py-2 rounded-md hover:bg-amber-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled={isSubmitting}>
+                <div className="flex justify-end gap-3 pt-4">
+                    <SecondaryButton type="button" onClick={onClose}>Cancelar</SecondaryButton>
+                    <PrimaryButton type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Guardando...' : 'Guardar'}
-                    </button>
+                    </PrimaryButton>
                 </div>
             </form>
         </Modal>
