@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore, initializeFirestore, persistentLocalCache, Firestore } from "firebase/firestore";
 
 // TODO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase
@@ -35,8 +34,5 @@ try {
 }
 
 
-// Initialize Firebase Auth
-const auth = getAuth(app);
-
-// Exporta las instancias de Firebase
-export { db, auth };
+// Exporta la instancia de la base de datos de Firestore
+export { db };

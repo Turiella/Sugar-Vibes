@@ -1,56 +1,85 @@
 import React from 'react';
 import { Recipe } from '../types';
-import { Card } from './ui/Card';
-import { PrimaryButton } from './ui/PrimaryButton';
-import { Mic, Plus, Edit, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Clock, Users, DollarSign, Edit2, Trash2 } from 'lucide-react';
 
 interface RecipeManagerProps {
     recipes: Recipe[];
-    selectedRecipeId: string | null;
-    onSelectRecipe: (id: string) => void;
-    onAdd: () => void;
-    onEdit: (rec: Recipe) => void;
+    onSelect: (id: string) => void;
+    onEdit: (recipe: Recipe) => void;
     onDelete: (id: string) => void;
-    onListen: () => void;
+    calculateCost: (recipe: Recipe) => number;
 }
 
-export const RecipeManager: React.FC<RecipeManagerProps> = ({ recipes, selectedRecipeId, onSelectRecipe, onAdd, onEdit, onDelete, onListen }) => (
-    <Card>
-        <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Recetas</h2>
-            <div className="flex items-center gap-2">
-                 <button
-                    onClick={onListen}
-                    aria-label="Añadir receta por voz"
-                    className="p-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
-                >
-                    <Mic size={20} />
-                </button>
-                <PrimaryButton onClick={onAdd} className="flex items-center gap-2 !py-2 !px-3">
-                    <Plus size={18} />
-                    <span className="hidden sm:inline">Nueva</span>
-                </PrimaryButton>
-            </div>
-        </div>
-        <div className="space-y-3 pr-2 -mr-2 max-h-[400px] overflow-y-auto">
-            {recipes.map(rec => (
-                <div
-                    key={rec.id}
-                    onClick={() => onSelectRecipe(rec.id)}
-                    className={`p-4 rounded-lg cursor-pointer transition-all ${selectedRecipeId === rec.id ? 'bg-emerald-100 ring-2 ring-emerald-500' : 'hover:bg-gray-100'}`}
-                >
-                    <div className="flex justify-between items-start">
-                        <div>
-                           <p className="font-bold text-gray-800">{rec.name}</p>
-                           <p className="text-sm text-gray-600">{rec.servings} porciones</p>
-                        </div>
-                        <div className="flex items-center gap-3 pt-1">
-                            <button onClick={(e) => { e.stopPropagation(); onEdit(rec); }} className="text-gray-400 hover:text-emerald-600 transition-colors"><Edit size={18} /></button>
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(rec.id); }} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
-                        </div>
-                    </div>
+export const RecipeManager: React.FC<RecipeManagerProps> = ({ 
+    recipes, 
+    onSelect,
+    onEdit,
+    onDelete,
+    calculateCost
+}) => {
+    return (
+        <div className="divide-y divide-gray-100">
+            {recipes.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                    <p>No hay recetas registradas</p>
+                    <p className="text-sm mt-1">Crea tu primera receta para comenzar</p>
                 </div>
-            ))}
+            ) : (
+                <ul className="divide-y divide-gray-100">
+                    {recipes.map((recipe) => (
+                        <motion.li 
+                            key={recipe.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                            onClick={() => onSelect(recipe.id)}
+                        >
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-900">{recipe.name}</h3>
+                                    <div className="mt-1 flex flex-wrap gap-2">
+                                        <span className="inline-flex items-center text-xs text-gray-500">
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            {recipe.preparationTime} min
+                                        </span>
+                                        <span className="inline-flex items-center text-xs text-gray-500">
+                                            <Users className="h-3 w-3 mr-1" />
+                                            {recipe.portions} porciones
+                                        </span>
+                                        <span className="inline-flex items-center text-xs font-medium text-green-700">
+                                            <DollarSign className="h-3 w-3 mr-1" />
+                                            {calculateCost(recipe).toFixed(2)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex space-x-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEdit(recipe);
+                                        }}
+                                        className="text-gray-400 hover:text-blue-600 p-1"
+                                        aria-label="Editar receta"
+                                    >
+                                        <Edit2 className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDelete(recipe.id);
+                                        }}
+                                        className="text-gray-400 hover:text-red-600 p-1"
+                                        aria-label="Eliminar receta"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.li>
+                    ))}
+                </ul>
+            )}
         </div>
-    </Card>
-);
+    );
+};

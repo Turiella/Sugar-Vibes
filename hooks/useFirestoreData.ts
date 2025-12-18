@@ -1,89 +1,135 @@
-import { useState, useEffect, useRef } from 'react';
-import { collection, onSnapshot, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { 
+    collection, 
+    onSnapshot, 
+    query, 
+    orderBy, 
+    addDoc, 
+    updateDoc, 
+    doc, 
+    deleteDoc, 
+    DocumentData,
+    getDocs,
+    writeBatch
+} from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Ingredient, Recipe } from '../types';
-import { initialIngredients, initialRecipes } from '../data';
 
 export const useFirestoreData = () => {
-    const [isLoading, setIsLoading] = useState(true);
     const [ingredients, setIngredients] = useState<Map<string, Ingredient>>(new Map());
     const [recipes, setRecipes] = useState<Map<string, Recipe>>(new Map());
+    const [isLoading, setIsLoading] = useState(true);
     const isInitialized = useRef(false);
 
+    // Función para agregar un ingrediente
+    const addIngredient = useCallback(async (ingredient: Omit<Ingredient, 'id'>): Promise<Ingredient> => {
+        try {
+            const docRef = await addDoc(collection(db, 'ingredients'), ingredient);
+            return { ...ingredient, id: docRef.id } as Ingredient;
+        } catch (error) {
+            console.error('Error al agregar el ingrediente:', error);
+            throw error;
+        }
+    }, []);
+
+    // Función para actualizar un ingrediente
+    const updateIngredient = useCallback(async (ingredient: Ingredient): Promise<void> => {
+        try {
+            const { id, ...ingredientData } = ingredient;
+            await updateDoc(doc(db, 'ingredients', id), ingredientData as DocumentData);
+        } catch (error) {
+            console.error('Error al actualizar el ingrediente:', error);
+            throw error;
+        }
+    }, []);
+
+    // Función para eliminar un ingrediente
+    const deleteIngredient = useCallback(async (id: string): Promise<void> => {
+        try {
+            await deleteDoc(doc(db, 'ingredients', id));
+        } catch (error) {
+            console.error('Error al eliminar el ingrediente:', error);
+            throw error;
+        }
+    }, []);
+
+    // Cargar datos iniciales
     useEffect(() => {
-        // This effect should only run once.
         if (isInitialized.current) return;
         isInitialized.current = true;
 
         const ingredientsCol = collection(db, 'ingredients');
         const recipesCol = collection(db, 'recipes');
-        let unsubIngredients: () => void;
-        let unsubRecipes: () => void;
 
-        const initialize = async () => {
+        const loadData = async () => {
             try {
-                // Check if data exists in the database
                 const [ingredientsSnapshot, recipesSnapshot] = await Promise.all([
                     getDocs(ingredientsCol),
-                    getDocs(recipesCol),
+                    getDocs(recipesCol)
                 ]);
 
-                // If the database is empty, populate it with initial data.
-                if (ingredientsSnapshot.empty && recipesSnapshot.empty) {
-                    console.log("Database appears empty. Populating with initial data...");
-                    const batch = writeBatch(db);
-                    initialIngredients.forEach(ing => {
-                        const ingRef = doc(db, 'ingredients', ing.id);
-                        batch.set(ingRef, ing);
-                    });
-                    initialRecipes.forEach(rec => {
-                        const recRef = doc(db, 'recipes', rec.id);
-                        batch.set(recRef, rec);
-                    });
-                    await batch.commit();
-                    console.log("Initial data populated successfully.");
-                }
-
-                // Set up real-time listeners for both collections.
-                unsubIngredients = onSnapshot(ingredientsCol, (snapshot) => {
-                    const newIngredients = new Map<string, Ingredient>();
-                    snapshot.docs.forEach(doc => newIngredients.set(doc.id, doc.data() as Ingredient));
-                    setIngredients(newIngredients);
-                    // Stop loading after the first successful data retrieval.
-                    if (isLoading) {
-                       setIsLoading(false);
+                // Configurar listeners en tiempo real
+                const unsubscribeIngredients = onSnapshot(
+                    query(ingredientsCol, orderBy('name')), 
+                    (snapshot) => {
+                        const ingredientsMap = new Map<string, Ingredient>();
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            if (data.name && data.pricePerUnit && data.unit) {
+                                ingredientsMap.set(doc.id, { 
+                                    id: doc.id, 
+                                    ...data 
+                                } as Ingredient);
+                            }
+                        });
+                        setIngredients(ingredientsMap);
+                        setIsLoading(false);
+                    },
+                    (error) => {
+                        console.error('Error al cargar ingredientes:', error);
+                        setIsLoading(false);
                     }
-                }, (error) => {
-                    console.error("Error listening to ingredients:", error);
-                    alert("Error al cargar ingredientes.");
-                    setIsLoading(false);
-                });
+                );
 
-                unsubRecipes = onSnapshot(recipesCol, (snapshot) => {
-                    const newRecipes = new Map<string, Recipe>();
-                    snapshot.docs.forEach(doc => newRecipes.set(doc.id, doc.data() as Recipe));
-                    setRecipes(newRecipes);
-                }, (error) => {
-                    console.error("Error listening to recipes:", error);
-                    alert("Error al cargar recetas.");
-                    setIsLoading(false);
-                });
+                const unsubscribeRecipes = onSnapshot(
+                    query(recipesCol, orderBy('name')),
+                    (snapshot) => {
+                        const recipesMap = new Map<string, Recipe>();
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            if (data.name && data.items) {
+                                recipesMap.set(doc.id, {
+                                    id: doc.id,
+                                    ...data
+                                } as Recipe);
+                            }
+                        });
+                        setRecipes(recipesMap);
+                    },
+                    (error) => {
+                        console.error('Error al cargar recetas:', error);
+                    }
+                );
 
+                return () => {
+                    unsubscribeIngredients();
+                    unsubscribeRecipes();
+                };
             } catch (error) {
-                console.error("Failed to initialize Firestore data:", error);
+                console.error('Error al cargar datos iniciales:', error);
                 setIsLoading(false);
-                alert("No se pudo conectar a la base de datos.");
             }
         };
 
-        initialize();
+        loadData();
+    }, []);
 
-        // Cleanup listeners on component unmount.
-        return () => {
-            if (unsubIngredients) unsubIngredients();
-            if (unsubRecipes) unsubRecipes();
-        };
-    }, []); // Empty dependency array ensures this runs only once.
-
-    return { isLoading, ingredients, recipes };
+    return {
+        isLoading,
+        ingredients,
+        recipes,
+        addIngredient,
+        updateIngredient,
+        deleteIngredient
+    };
 };
